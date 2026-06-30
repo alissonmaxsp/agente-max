@@ -34,7 +34,7 @@ async def analyze_website(url: str, timeout_ms: int = 15000) -> dict:
         # 3. Captura requisições de rede falhas (ex: bloqueadas por adblock, DNS ou CORS)
         page.on("requestfailed", lambda req: results["network_failures"].append({
             "url": req.url,
-            "error_text": req.failure.error_text if req.failure else "Desconhecido"
+            "error_text": req.failure if req.failure else "Desconhecido"
         }))
 
         # 4. Captura respostas HTTP com erro (status >= 400)
