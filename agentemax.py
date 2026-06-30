@@ -295,24 +295,38 @@ def run_authed_suite(url: str, model_alias: str, timeout_ms: int):
             return
     else:
         console.print(Panel(
-            "[bold]Como obter um cookie de sessão COMPLETO (carregado):[/]\n\n"
-            "1. Faça [bold]login[/] no site normalmente.\n"
-            "2. [yellow]Navegue por TODAS as áreas do app[/] — painel, perfil, configurações\n"
-            "   e principalmente as [yellow]páginas de pagamento / checkout[/].\n"
-            "   [dim]Isso garante que a sessão carregue todos os tokens/escopos no cookie.[/]\n"
-            "3. Abra o DevTools: [cyan]F12 → Application → Cookies[/].\n"
-            "4. Copie os cookies no formato: [green]nome=valor; nome2=valor2[/]\n\n"
-            "[bold yellow]⚠️  Obs:[/] um cookie incompleto (sem visitar pagamentos/áreas internas)\n"
-            "pode fazer o scan autenticado pular endpoints que só aparecem logado.",
-            title="🍪 Cookie de sessão", border_style="cyan", padding=(1, 2)))
+            "[bold]Como funciona:[/] você cola o cookie da sua sessão já logada. O Agente MAX\n"
+            "usa esse cookie pra abrir o site [bold]como você[/] e visitar as telas internas,\n"
+            "capturando os endpoints de API que cada uma chama — e então testa esses endpoints.\n\n"
+            "[bold]O que VOCÊ deve fazer:[/]\n"
+            "1. Faça [bold]login[/] no site no seu navegador.\n"
+            "2. Abra o DevTools: [cyan]F12 → Application → Cookies[/] (escolha o domínio do site).\n"
+            "3. Copie os cookies no formato: [green]nome=valor; nome2=valor2[/]\n\n"
+            "[bold yellow]⚠️  Importante:[/] o cookie é definido [bold]no login[/] — navegar mais NÃO o\n"
+            "deixa 'mais completo'. O que amplia a cobertura é informar, no próximo passo,\n"
+            "[yellow]as rotas internas/pagamento do seu site[/] (ex.: /checkout, /recarga). Só dá pra\n"
+            "testar o que o scanner visita — então aponte as telas onde estão saldo/pagamento.\n"
+            "[dim](Exceção: se o app cria cookies extras no checkout — ex.: CSRF/carrinho — visite\n"
+            "essas telas antes de copiar pra incluir esses cookies também.)[/]",
+            title="🍪 Scan autenticado por Cookie", border_style="cyan", padding=(1, 2)))
         cookie = Prompt.ask("[bold]Cole o cookie de sessão[/]").strip()
         if not cookie:
             console.print("[red]❌ Cookie vazio.[/]")
             return
 
+    # Rotas internas/pagamento informadas pelo usuário — ampliam a descoberta.
+    console.print(
+        "\n[dim]O scanner já visita rotas comuns (/dashboard, /wallet, /billing...).\n"
+        "Informe as ESPECÍFICAS do seu site onde ficam saldo/pagamento p/ cobrir mais.[/]")
+    rotas_raw = Prompt.ask(
+        "[bold]Rotas internas/pagamento a testar[/] [dim](ex.: /checkout, /recarga — Enter pula)[/]",
+        default="")
+    extra_routes = [r.strip() for r in rotas_raw.replace(",", " ").split() if r.strip()] or None
+
     with console.status("[bold cyan]Descobrindo e testando endpoints autenticados...[/]", spinner="dots"):
         report = asyncio.run(scan_authenticated(url, login_url, creds, token=token, cookie=cookie,
-                                                token_key=token_key or None, timeout_ms=timeout_ms))
+                                                token_key=token_key or None, timeout_ms=timeout_ms,
+                                                extra_routes=extra_routes))
 
     lg = report.get("login", {})
     if not lg.get("ok"):

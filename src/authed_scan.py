@@ -24,8 +24,16 @@ from src.nosql_scan import _detect_mongo_error, _JSON_OPERATORS
 from src.api_checks import CANARY_FIELD
 
 
-async def discover_authed_endpoints(site_url: str, token: str | None, cookies: dict, timeout_ms: int) -> list[dict]:
-    """Navega o site autenticado e captura chamadas de API (mesma origem)."""
+async def discover_authed_endpoints(site_url: str, token: str | None, cookies: dict, timeout_ms: int,
+                                    extra_routes: list[str] | None = None) -> list[dict]:
+    """
+    Navega o site autenticado e captura chamadas de API (mesma origem).
+
+    `extra_routes`: caminhos internos informados pelo usuário (ex.: /checkout,
+    /recarga) que são visitados ALÉM da lista padrão — é o que mais aumenta a
+    cobertura, pois leva o scanner exatamente às telas onde estão os endpoints
+    sensíveis (pagamento, saldo, etc.).
+    """
     origin = urlparse(site_url).netloc
     calls = {}
 
@@ -78,6 +86,11 @@ async def discover_authed_endpoints(site_url: str, token: str | None, cookies: d
         rotas = ["", "/dashboard", "/painel", "/profile", "/perfil", "/account", "/conta",
                  "/settings", "/configuracoes", "/wallet", "/carteira", "/saldo", "/billing",
                  "/user", "/usuario", "/home", "/app"]
+        # Rotas informadas pelo usuário entram primeiro (prioridade) e sem duplicar.
+        for r in reversed(extra_routes or []):
+            rota = r if r.startswith("/") else "/" + r
+            if rota not in rotas:
+                rotas.insert(0, rota)
         for rota in rotas:
             try:
                 await page.goto(base + rota, wait_until="networkidle", timeout=min(timeout_ms, 12000))
@@ -151,6 +164,7 @@ async def scan_authenticated(
     token: str | None = None,
     cookie: str | None = None,
     manual_endpoints: list[dict] | None = None,
+    extra_routes: list[str] | None = None,
 ) -> dict:
     """
     Orquestra o scan autenticado. Três modos de auth:
@@ -182,7 +196,7 @@ async def scan_authenticated(
             result["error"] = sess["detail"] or "login falhou"
             return result
         token, cookies = sess["token"], sess["cookies"]
-    endpoints = await discover_authed_endpoints(site_url, token, cookies, timeout_ms)
+    endpoints = await discover_authed_endpoints(site_url, token, cookies, timeout_ms, extra_routes=extra_routes)
     if manual_endpoints:
         endpoints = list(manual_endpoints) + endpoints
     result["endpoints"] = [{"method": e["method"], "url": e["url"], "has_body": isinstance(e.get("body"), dict)}

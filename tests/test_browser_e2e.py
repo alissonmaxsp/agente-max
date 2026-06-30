@@ -10,6 +10,7 @@ import pytest
 
 from src.browser import analyze_website
 from src.security_scan import _discover_entry_points
+from src.authed_scan import scan_authenticated
 
 pytestmark = [pytest.mark.browser, pytest.mark.integration]
 
@@ -39,3 +40,15 @@ async def test_discover_entry_points_finds_form(vuln_server, chromium_ready):
     forms = points["forms"]
     assert forms, "deveria descobrir o formulário da página"
     assert any("q" in f.get("inputs", []) for f in forms)
+
+
+async def test_authed_scan_cookie_mode_parses_and_runs(vuln_server, chromium_ready):
+    # Modo cookie ponta-a-ponta: parseia o cookie, navega (com extra_routes) e
+    # não quebra mesmo num site estático (sem endpoints de API a testar).
+    result = await scan_authenticated(
+        vuln_server, cookie="session=abc; csrf=xyz",
+        extra_routes=["/search", "recarga"], timeout_ms=8000,
+    )
+    assert result["login"]["ok"] is True
+    assert result["login"]["cookies"] == ["session", "csrf"]
+    assert "endpoints" in result and "findings" in result

@@ -10,6 +10,9 @@ O **Agente MAX** é um auditor inteligente de sites, depurador de front-end e sc
 > [!WARNING]
 > **Uso Autorizado & Defensivo:** Os módulos de segurança são projetados exclusivamente para auditoria e detecção **não destrutiva**. Use-os apenas em sistemas próprios ou com autorização explícita e por escrito dos proprietários.
 
+> [!TIP]
+> 📘 **Novo por aqui?** Comece pelo **[TUTORIAL.md](TUTORIAL.md)** — guia passo a passo do zero ao primeiro relatório, incluindo o scan autenticado por cookie.
+
 ---
 
 ## ✨ Funcionalidades Principais
