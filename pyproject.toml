@@ -1,0 +1,31 @@
+[tool.pytest.ini_options]
+# asyncio_mode=auto: testes `async def` rodam sem precisar de @pytest.mark.asyncio.
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Torna o pacote `src` importável sem hacks de sys.path.
+pythonpath = ["."]
+addopts = "-q --cov=src --cov-report=term-missing"
+markers = [
+    "integration: testes que exercitam fluxos completos (HTTP mockado/Playwright).",
+    "browser: testes que dependem do Playwright/Chromium instalado.",
+]
+filterwarnings = [
+    "default",
+    # Ruído de libs de terceiros (não é código do projeto):
+    "ignore::DeprecationWarning:jose.*",
+    "ignore::DeprecationWarning:sqlalchemy.*",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/main.py", "src/routes/*", "src/database.py"]
+
+[tool.coverage.report]
+show_missing = true
+# Não falha o build por enquanto; suba este número conforme a cobertura cresce.
+fail_under = 0
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

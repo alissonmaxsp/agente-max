@@ -26,6 +26,7 @@ from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich.text import Text
 from rich.markdown import Markdown
+from rich.panel import Panel
 
 from src.llm import explain_report
 from src.runner import MODULES, category_modules, run_modules
@@ -293,7 +294,17 @@ def run_authed_suite(url: str, model_alias: str, timeout_ms: int):
             console.print("[red]❌ Token vazio.[/]")
             return
     else:
-        console.print("[dim]Cookie: F12 → Application → Cookies. Copie no formato 'nome=valor; nome2=valor2'.[/]")
+        console.print(Panel(
+            "[bold]Como obter um cookie de sessão COMPLETO (carregado):[/]\n\n"
+            "1. Faça [bold]login[/] no site normalmente.\n"
+            "2. [yellow]Navegue por TODAS as áreas do app[/] — painel, perfil, configurações\n"
+            "   e principalmente as [yellow]páginas de pagamento / checkout[/].\n"
+            "   [dim]Isso garante que a sessão carregue todos os tokens/escopos no cookie.[/]\n"
+            "3. Abra o DevTools: [cyan]F12 → Application → Cookies[/].\n"
+            "4. Copie os cookies no formato: [green]nome=valor; nome2=valor2[/]\n\n"
+            "[bold yellow]⚠️  Obs:[/] um cookie incompleto (sem visitar pagamentos/áreas internas)\n"
+            "pode fazer o scan autenticado pular endpoints que só aparecem logado.",
+            title="🍪 Cookie de sessão", border_style="cyan", padding=(1, 2)))
         cookie = Prompt.ask("[bold]Cole o cookie de sessão[/]").strip()
         if not cookie:
             console.print("[red]❌ Cookie vazio.[/]")

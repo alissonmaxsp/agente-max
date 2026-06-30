@@ -193,11 +193,28 @@ python -m src.cli idor https://api.meusite.com/users/100 --id 100 --auth "Bearer
 
 ## 🧪 Testes Automatizados
 
-Para certificar-se de que os mecanismos de segurança e o scanner estão funcionando conforme o esperado, execute a suíte de testes:
+A suíte cobre desde funções puras (detecção de erros SQL/Mongo, análise de JWT)
+até **testes de integração** dos scanners com HTTP simulado (`respx`) — validando
+o fluxo real de descoberta → injeção → detecção sem depender de rede ou de um alvo
+externo — além da lógica de rotação de chaves/fallback do motor de IA e dos
+comandos da CLI.
 
 ```powershell
+# Roda tudo, já com relatório de cobertura (configurado no pyproject.toml)
 pytest
+
+# Apenas os testes de integração (HTTP mockado)
+pytest -m integration
+
+# Pula testes que exigem o navegador do Playwright instalado
+pytest -m "not browser"
+
+# Cobertura detalhada em HTML
+pytest --cov=src --cov-report=html
 ```
+
+> Os testes injetam o próprio ambiente (não exigem um `.env` real) e rodam
+> automaticamente no **CI** (GitHub Actions) a cada push/PR em Python 3.10–3.12.
 
 ---
 
